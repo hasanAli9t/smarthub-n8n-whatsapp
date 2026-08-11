@@ -1,0 +1,284 @@
+{
+  "name": "whatsapp workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "586b4f5c-7076-4aa5-b8ca-83fa10d08ad4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        80,
+        208
+      ],
+      "id": "780bb06b-37d5-4894-a2e8-ae45cc7bbc2c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "btRN8FsRPQe8aCIt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "a226d825-0128-496c-a441-8d5cda511798",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "analyze the question and revert back with the response in a professional way via  whatsApp",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "smarthub",
+          "mode": "list",
+          "cachedResultName": "smarthub"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        224
+      ],
+      "id": "925c85d6-341e-4e66-8a00-7f774e8bc6af",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "fkiXK34LHJVqMx4T",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        400
+      ],
+      "id": "914d664a-9857-452d-b829-fad1287665f6",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "btRN8FsRPQe8aCIt",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "886678647872593",
+        "recipientPhoneNumber": "+923452372181",
+        "textBody": "Testing",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        0
+      ],
+      "id": "71e3f9f8-0cee-4f16-83f0-87efa2ef83fd",
+      "name": "Send message",
+      "webhookId": "64839a8f-a191-4a01-b8ac-bf494d1b136b",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "o4bCFjrPLw7irzNf",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {
+          "messageStatusUpdates": [
+            "all"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "aa2196b2-6abc-4f0f-8ad8-380dff36617a",
+      "name": "WhatsApp Trigger",
+      "webhookId": "2ddcf091-c71c-40af-94af-f2b85e974a22",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "ZGT9Msu5NtHLtWJf",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "2ed53696-ed85-4be3-8d66-e7bb1a761f3f",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -720,
+        -112
+      ],
+      "id": "939ca29b-fcef-47a9-b929-85f8cb439fa5",
+      "name": "Webhook",
+      "webhookId": "2ed53696-ed85-4be3-8d66-e7bb1a761f3f"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3fdd3570-6314-4433-9782-618782abe190",
+              "leftValue": "={{ $json.query['hub.node'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        -112
+      ],
+      "id": "856a030d-c4d2-4323-a1ea-93f4929c02bf",
+      "name": "Filter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "69373cbb-8562-41ad-bc09-4bdfee82d242",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1bca054ce6a3693f2da971a3d84c16f8880d710c8996228ce71e149d7641d7e6"
+  },
+  "id": "8hPLSDcfoR1cLxdn",
+  "tags": []
+}

@@ -1,0 +1,496 @@
+{
+  "name": "workshop customer suport agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        384
+      ],
+      "id": "e4879b9c-1bf9-466d-99d6-ed8e5e7be6a1",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "WFclwDobk67wug6p",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "call this tool to access data base to answer the user email",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "flowerrupdatedata",
+          "mode": "list",
+          "cachedResultName": "flowerrupdatedata"
+        },
+        "options": {
+          "pineconeNamespace": "newflowerdata"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        160
+      ],
+      "id": "d69759ad-c3c0-4a43-b7dd-6e2fd319b78b",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "cgKSAVtW4xuaW4PQ",
+          "name": "PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{$json.threadId || $json[\"threadId\"] || $json.id}}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        176
+      ],
+      "id": "9bf9e74b-69d6-44ba-a5bd-2a2ab3bfd4ec",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -800,
+        128
+      ],
+      "id": "fe502ac4-1e4a-4cbf-84ce-e9452c116171",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "WFclwDobk67wug6p",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert customer support classifier. Your job is to:  1. Analyze customer emails for URGENCY LEVEL 2. Generate appropriate responses using provided knowledge base and checking pincorn database \n3. rate the confidence based on customer message in email body and subject, if its somthing bad ,alrminging, critical, give it low confidence, under 0.7, if its neutral and normal,, give it based above 0.7 based on your caluclation\n4. Return structured data for automated routing  URGENCY CLASSIFICATION:  NORMAL (auto-send): - General questions (business hours, pricing, services) - Product inquiries  - Positive feedback - Basic information requests  CRITICAL (create draft + alert manager): - Order not delivered/late delivery - Wrong items received - Damaged/defective products - Refund requests - Angry/frustrated customers - Urgent time-sensitive requests - Service complaints - Payment issues  You must respond with EXACTLY this JSON format: {   \"urgency\": \"normal\" or \"critical\",   \"category\": \"pricing\" or \"delivery\" or \"complaint\" or \"product\" or \"refund\" or \"general\",   \"confidence\": 0.85,   \"customer_mood\": \"happy\" or \"neutral\" or \"frustrated\" or \"angry\",   \"reply\": \"Your professional response using knowledge base information\" }  Here is the email body {{ $json.snippet }}   and here is the subject {{ $json.Subject }}\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -656,
+        -80
+      ],
+      "id": "60b628a1-519d-41a2-851f-c8800b2026f0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        -80
+      ],
+      "id": "73a54d95-0320-44bf-9ed3-a1ef5355baed",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LL1yeHzcVoeJafBV",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe8052a2-9a3d-455e-a500-70c6a68097cf",
+              "name": "urgency",
+              "value": "={{ JSON.parse($json.output).urgency}}",
+              "type": "string"
+            },
+            {
+              "id": "4e5810d1-7e95-42ad-89ba-aafa5aa3e0b7",
+              "name": "category",
+              "value": "={{ JSON.parse($json.output).category}}",
+              "type": "string"
+            },
+            {
+              "id": "d78c1a28-2466-47b1-b5c1-e811a6ee1fad",
+              "name": "=confidence",
+              "value": "={{ JSON.parse($json.output).confidence}}",
+              "type": "string"
+            },
+            {
+              "id": "096c68b4-4a08-49e4-9bc7-35276116a490",
+              "name": "customer_mood",
+              "value": "={{ JSON.parse($json.output).customer_mood}}",
+              "type": "string"
+            },
+            {
+              "id": "23faba19-2054-4fb3-8e75-e3c7f9de8996",
+              "name": "reply",
+              "value": "={{ JSON.parse($json.output).reply}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -304,
+        -80
+      ],
+      "id": "9d8daa73-8db9-4de2-8817-8a73465528e3",
+      "name": "data structuring"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Gmail Trigger').item.json.From }}",
+        "subject": "=Hey Dear Customer",
+        "message": "={{ $json.reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        -272
+      ],
+      "id": "2f01ef7b-c815-4357-aac4-5556330996aa",
+      "name": "Send a message",
+      "webhookId": "2b49d06a-bbd5-4005-8f17-1c0d285b7677",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LL1yeHzcVoeJafBV",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "90b1458a-2637-479f-9b88-f3c42a64992c",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 0.7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "e29f7376-472a-43e9-9ab4-8d369017eb75",
+              "leftValue": "={{ $json.customer_mood }}",
+              "rightValue": "frustrated",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "e9fd019a-d5e0-4be7-b5e5-b323d9e7eb54",
+              "leftValue": "={{ $json.customer_mood }}",
+              "rightValue": "angry",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        -80
+      ],
+      "id": "3f2a53b5-df99-4c0f-8c29-4a2ab15071a5",
+      "name": "auto respond?"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "Dear Customer ",
+        "message": "={{ $json.reply }}",
+        "options": {
+          "sendTo": "={{ $('Gmail Trigger').item.json.From }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        0
+      ],
+      "id": "8ae409ae-f5bb-4e40-b8ca-a9aeae1a23fe",
+      "name": "Create a draft",
+      "webhookId": "5ee4c3aa-0cc4-4d47-9384-cd044d061191",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LL1yeHzcVoeJafBV",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e175982e-5e3d-4e2f-be76-f2fa4149d196",
+              "leftValue": "={{ $('auto respond?').item.json.category }}",
+              "rightValue": "=complaint",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "68ca9a52-dfd6-4d70-b854-1192468fef3a",
+              "leftValue": "={{ $('auto respond?').item.json.category }}",
+              "rightValue": "refund",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "cd390247-829a-4cb1-91ef-c80817dc3271",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        128
+      ],
+      "id": "1c9186c0-2f51-4c67-9aca-3a13e74c6fbc",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "sendTo": "badarvlog@gmail.com",
+        "subject": "Critical Issue raised",
+        "message": "=<p><strong>A critical customer issue requires immediate manager attention:</strong></p>\n\n<p><strong>Customer:</strong> {{ $('Gmail Trigger').item.json.From }}<br>\n<strong>Subject:</strong> {{ $('Gmail Trigger').item.json.Subject }}<br>\n<strong>Category:</strong> {{ $('auto respond?').item.json.category }}<br>\n<strong>Mood:</strong> {{ $('auto respond?').item.json.customer_mood }}<br>\n<strong>Urgency:</strong> {{ $('auto respond?').item.json.urgency }}</p>\n\n<p><strong>Customer Message:</strong><br>\n{{ $('Gmail Trigger').item.json.text }}</p>\n\n<p><strong>AI Draft Response (created in Gmail drafts):</strong><br>\n{{ $('auto respond?').item.json.reply }}</p>\n\n<p><strong>Action Required:</strong></p>\n<ol>\n  <li>Review the draft in Gmail</li>\n  <li>Customize response if needed</li>\n  <li>Send to customer</li>\n  <li>Follow up as necessary</li>\n</ol>\n\n<p><strong>Gmail Link:</strong>  \n<a href=\"https://mail.google.com/mail/u/0/#inbox/{{ $('Gmail Trigger').item.json.id }}\">\nhttps://mail.google.com/mail/u/0/#inbox/{{ $('Gmail Trigger').item.json.id }}</a></p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        832,
+        -96
+      ],
+      "id": "ba19f479-1145-469c-b7c8-280c31e9d16a",
+      "name": "Send a message1",
+      "webhookId": "8f0cb378-c16b-4bed-ba07-20edac8fe8ae",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "LL1yeHzcVoeJafBV",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "data structuring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data structuring": {
+      "main": [
+        [
+          {
+            "node": "auto respond?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "auto respond?": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a draft": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3abb997f-b5db-4699-9e08-b9b4e68fc689",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "997a74f4f0a8546c3de2f7784e58b6e789691d92f0cb80a8d81beadbab09cc13"
+  },
+  "id": "QLTVzX6MIsVZDZQi",
+  "tags": []
+}
